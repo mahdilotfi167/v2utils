@@ -1,0 +1,5 @@
+venv
+.git
+.gitignore
+v2ray.sh
+requirements.txt
