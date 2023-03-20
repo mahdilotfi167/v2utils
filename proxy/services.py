@@ -27,7 +27,7 @@ def make_inbounds():
         for user in users:
             client_data.append({
                 "email": "%s@%s" % (user.username, inbound.tag),
-                "id": user.uuid,
+                "id": str(user.uuid),
             })
         inbound_data["settings"]["clients"] = client_data
         inbounds.append(inbound_data)

@@ -3,8 +3,8 @@ from polymorphic.models import PolymorphicModel
 
 
 class User(models.Model):
-    username = models.CharField(max_length=100)
-    uuid = models.UUIDField()
+    username = models.CharField(max_length=100, unique=True)
+    uuid = models.UUIDField(unique=True)
     max = models.PositiveBigIntegerField(null=True, blank=True)
     up = models.PositiveBigIntegerField(default=0)
     down = models.PositiveBigIntegerField(default=0)
@@ -38,7 +38,7 @@ class Inbound(PolymorphicModel):
         raise NotImplementedError()
 
     def __str__(self):
-        return self.key
+        return self.tag
 
     def __repr__(self):
         return self.__str__()
