@@ -1,12 +1,10 @@
 from django.apps import AppConfig
-import subprocess
 
 
 class ProxyConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'proxy'
 
-    # def ready(self) -> None:
-        # run v2ray
-        # subprocess.Popen(['v2ray', '-config', '/etc/v2ray/config.json'])
-        # return super().ready()
+    def ready(self) -> None:
+        from proxy.services import start_v2ray
+        start_v2ray()
