@@ -17,8 +17,7 @@ class User(models.Model):
 
 
 class Inbound(PolymorphicModel):
-    key = models.CharField(max_length=100)
-    tag = models.CharField(max_length=100, blank=True, null=True)
+    tag = models.CharField(max_length=100, unique=True)
     listen = models.CharField(max_length=255)
     port = models.PositiveIntegerField(blank=True, null=True)
     settings = models.JSONField(blank=True, null=True)

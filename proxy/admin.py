@@ -23,7 +23,7 @@ class InboundAdmin(PolymorphicParentModelAdmin):
     base_model = Inbound
     child_models = (Vmess, Vless)
     list_filter = (PolymorphicChildModelFilter,)
-    list_display = ('key', 'up', 'down')
+    list_display = ('tag', 'up', 'down')
 
 
 @admin.register(User)
