@@ -1,2 +1,7 @@
 Django==3.2.18
 django-3-jet==1.0.8
+django-polymorphic==3.1.0
+grpcio==1.51.3
+grpcio-tools==1.51.3
+Jinja2==3.1.2
+gunicorn==20.1.0
