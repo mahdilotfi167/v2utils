@@ -9,6 +9,12 @@ class User(models.Model):
     up = models.PositiveBigIntegerField(default=0)
     down = models.PositiveBigIntegerField(default=0)
 
+    def __str__(self):
+        return self.username
+
+    def __repr__(self):
+        return self.__str__()
+
 
 class Inbound(PolymorphicModel):
     key = models.CharField(max_length=100)
@@ -31,6 +37,12 @@ class Inbound(PolymorphicModel):
 
     def get_json(self, user: User) -> str:
         raise NotImplementedError()
+
+    def __str__(self):
+        return self.key
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class Vmess(Inbound):
