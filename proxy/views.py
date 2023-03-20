@@ -14,6 +14,6 @@ def subscription(request):
 
     links = list()
     for inbound in Inbound.objects.all():
-        links.append(inbound.get_link(user))
+        links.append(inbound.get_client_link(user))
 
     return HttpResponse(links_to_sub(links), content_type='text/plain')
