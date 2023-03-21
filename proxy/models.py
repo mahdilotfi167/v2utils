@@ -111,18 +111,30 @@ class Certificate(models.Model):
     key = models.TextField()
 
     @property
+    def base_path(self):
+        return settings.CERT_FILES_BASE_DIR / str(self.id)
+
+    @property
     def cert_path(self):
-        return settings.CERT_FILES_BASE_DIR / str(self.id) / 'cert.pem'
+        return self.base_path / 'cert.pem'
 
     @property
     def key_path(self):
-        return settings.CERT_FILES_BASE_DIR / str(self.id) / 'key.pem'
+        return self.base_path / 'key.pem'
 
     def get_server_config(self):
         return {
             'certificateFile': self.cert_path,
             'keyFile': self.key_path,
         }
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self.base_path.mkdir(parents=True, exist_ok=True)
+        with open(self.cert_path, 'w') as f:
+            f.write(self.cert)
+        with open(self.key_path, 'w') as f:
+            f.write(self.key)
 
     def __str__(self):
         return self.domain
