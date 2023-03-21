@@ -95,3 +95,5 @@ STATIC_URL = 'static/'
 # Default primary key field type
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CERT_FILES_BASE_DIR = BASE_DIR / '.certs'

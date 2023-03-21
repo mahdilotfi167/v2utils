@@ -1,7 +1,41 @@
 from django.contrib import admin
 
 from proxy.models import *
-from polymorphic.admin import PolymorphicParentModelAdmin, PolymorphicChildModelAdmin, PolymorphicChildModelFilter
+from polymorphic.admin import (
+    PolymorphicParentModelAdmin,
+    PolymorphicChildModelAdmin,
+    PolymorphicChildModelFilter,
+    StackedPolymorphicInline,
+    PolymorphicInlineSupportMixin,
+)
+
+
+@admin.register(Certificate)
+class CertificateAdmin(admin.ModelAdmin):
+    pass
+
+
+class TransportInline(StackedPolymorphicInline):
+    model = Transport
+
+    class WebSocketInline(StackedPolymorphicInline.Child):
+        model = WebSocket
+
+    class HttpInline(StackedPolymorphicInline.Child):
+        model = Http
+
+    class TcpInline(StackedPolymorphicInline.Child):
+        model = Tcp
+
+    class GrpcInline(StackedPolymorphicInline.Child):
+        model = Grpc
+
+    child_inlines = (
+        WebSocketInline,
+        HttpInline,
+        TcpInline,
+        GrpcInline,
+    )
 
 
 class InboundChildAdmin(PolymorphicChildModelAdmin):
@@ -9,17 +43,23 @@ class InboundChildAdmin(PolymorphicChildModelAdmin):
 
 
 @admin.register(Vmess)
-class VmessAdmin(InboundChildAdmin):
+class VmessAdmin(PolymorphicInlineSupportMixin, InboundChildAdmin):
     base_model = Vmess
+    inlines = (TransportInline,)
+
+
+class FallbackInline(admin.StackedInline):
+    model = Fallback
 
 
 @admin.register(Vless)
-class VlessAdmin(InboundChildAdmin):
+class VlessAdmin(PolymorphicInlineSupportMixin, InboundChildAdmin):
     base_model = Vless
+    inlines = (TransportInline, FallbackInline,)
 
 
 @admin.register(Inbound)
-class InboundAdmin(PolymorphicParentModelAdmin):
+class InboundAdmin(PolymorphicInlineSupportMixin, PolymorphicParentModelAdmin):
     base_model = Inbound
     child_models = (Vmess, Vless)
     list_filter = (PolymorphicChildModelFilter,)

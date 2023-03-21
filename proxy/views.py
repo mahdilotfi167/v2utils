@@ -1,7 +1,6 @@
 from django.http import HttpResponse, HttpResponseBadRequest
 from uuid import UUID
 from proxy.models import User, Inbound
-from v2config.sub import links_to_sub
 
 
 def subscription(request):
@@ -16,4 +15,4 @@ def subscription(request):
     for inbound in Inbound.objects.all():
         links.append(inbound.get_client_link(user))
 
-    return HttpResponse(links_to_sub(links), content_type='text/plain')
+    return HttpResponse('\n'.join(links), content_type='text/plain')
