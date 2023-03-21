@@ -124,8 +124,8 @@ class Certificate(models.Model):
 
     def get_server_config(self):
         return {
-            'certificateFile': self.cert_path,
-            'keyFile': self.key_path,
+            'certificateFile': str(self.cert_path),
+            'keyFile': str(self.key_path),
         }
 
     def save(self, *args, **kwargs):
