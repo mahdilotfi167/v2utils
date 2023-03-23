@@ -10,6 +10,7 @@ V2ray utilities
 - [ ] Quick setup with docker (Nginx, V2utils, DNS cache service, Distributed database, ...)
 - [ ] Add logs and errors to admin panel
 - [ ] Partitioned django admin options
+- [ ] Two types of fallbacks (A fallbask can point to an inbound and a UDS will be created for share same address)
 
 ### How to?
 #### Update protocol buffer
