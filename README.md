@@ -9,6 +9,7 @@ V2ray utilities
 - [ ] Show and Get traffic values in human readable format (B, MB, GB, ...)
 - [ ] Quick setup with docker (Nginx, V2utils, DNS cache service, Distributed database, ...)
 - [ ] Add logs and errors to admin panel
+- [ ] Partitioned django admin options
 
 ### How to?
 #### Update protocol buffer
