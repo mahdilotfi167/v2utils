@@ -8,6 +8,7 @@ V2ray utilities
 - [ ] Store configurations in file and load a copy in memory for performance purposes.
 - [ ] Show and Get traffic values in human readable format (B, MB, GB, ...)
 - [ ] Quick setup with docker (Nginx, V2utils, DNS cache service, Distributed database, ...)
+- [ ] Add logs and errors to admin panel
 
 ### How to?
 #### Update protocol buffer
