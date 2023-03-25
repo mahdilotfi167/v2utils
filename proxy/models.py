@@ -6,7 +6,8 @@ from django.conf import settings
 
 class User(models.Model):
     username = models.CharField(max_length=100, unique=True)
-    uuid = models.UUIDField(unique=True)
+    uuid = models.UUIDField(unique=True, default=uuid4)
+    # enabled = models.BooleanField(default=True)
     max = models.PositiveBigIntegerField(null=True, blank=True)
     up = models.PositiveBigIntegerField(default=0)
     down = models.PositiveBigIntegerField(default=0)
@@ -144,7 +145,7 @@ class Transport(PolymorphicModel):
     network = ''
     tls = models.BooleanField(default=False)
     tls_alpn = models.CharField(max_length=255, blank=True, null=True)
-    tls_certificates = models.ManyToManyField(Certificate)
+    tls_certificates = models.ManyToManyField(Certificate, blank=True)
     inbound = models.OneToOneField(Inbound, models.CASCADE, related_name='transport')
 
     def get_server_config(self):
