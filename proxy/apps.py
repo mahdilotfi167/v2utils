@@ -1,4 +1,6 @@
 from django.apps import AppConfig
+import os
+import sys
 
 
 class ProxyConfig(AppConfig):
@@ -6,6 +8,7 @@ class ProxyConfig(AppConfig):
     name = 'proxy'
 
     def ready(self) -> None:
-        from proxy.services import start_v2ray, start_scheduler
-        start_v2ray()
-        start_scheduler()
+        if bool(os.environ.get('RUN_MAIN')):
+            from proxy.services import start_v2ray, start_scheduler
+            # start_v2ray()
+            start_scheduler()
