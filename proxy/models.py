@@ -2,12 +2,13 @@ from django.db import models
 from polymorphic.models import PolymorphicModel
 from typing import Iterable
 from django.conf import settings
+from uuid import uuid4
 
 
 class User(models.Model):
     username = models.CharField(max_length=100, unique=True)
     uuid = models.UUIDField(unique=True, default=uuid4)
-    # enabled = models.BooleanField(default=True)
+    enabled = models.BooleanField(default=True)
     max = models.PositiveBigIntegerField(null=True, blank=True)
     up = models.PositiveBigIntegerField(default=0)
     down = models.PositiveBigIntegerField(default=0)
@@ -77,6 +78,12 @@ class Inbound(PolymorphicModel):
 
     def __repr__(self):
         return self.__str__()
+
+
+class InboundAddress(models.Model):
+    address = models.CharField(max_length=255)
+    port = models.PositiveIntegerField()
+    inbound = models.ForeignKey(Inbound, on_delete=models.CASCADE, related_name='public_addresses')
 
 
 class Vmess(Inbound):

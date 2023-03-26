@@ -42,10 +42,15 @@ class InboundChildAdmin(PolymorphicChildModelAdmin):
     base_model = Inbound
 
 
+class InboundAddressInline(admin.TabularInline):
+    extra = 1
+    model = InboundAddress
+
+
 @admin.register(Vmess)
 class VmessAdmin(PolymorphicInlineSupportMixin, InboundChildAdmin):
     base_model = Vmess
-    inlines = (TransportInline,)
+    inlines = (TransportInline, InboundAddressInline)
 
 
 class FallbackInline(admin.StackedInline):
@@ -55,7 +60,7 @@ class FallbackInline(admin.StackedInline):
 @admin.register(Vless)
 class VlessAdmin(PolymorphicInlineSupportMixin, InboundChildAdmin):
     base_model = Vless
-    inlines = (TransportInline, FallbackInline,)
+    inlines = (TransportInline, FallbackInline, InboundAddressInline)
 
 
 @admin.register(Inbound)
