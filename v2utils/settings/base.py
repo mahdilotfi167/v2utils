@@ -6,6 +6,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # Application definition
 
 INSTALLED_APPS = [
+    'extra_settings',
     'jet.dashboard',
     'jet',
     'polymorphic',
@@ -15,7 +16,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'proxy'
+    'proxy',
 ]
 
 MIDDLEWARE = [

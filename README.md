@@ -24,3 +24,6 @@ python -m grpc_tools.protoc \
    --grpc_python_out=${V2UTILS_ROOT}/v2client/v${V2RAY_VERSION}/proto \
    **/*.proto
 ```
+#### Add extra setting
+Run `python manage.py makemigrations --empty appname`  
+Use `utils.migrations.AddExtraSetting in the generated migration`.
