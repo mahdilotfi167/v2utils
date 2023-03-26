@@ -6,5 +6,6 @@ class ProxyConfig(AppConfig):
     name = 'proxy'
 
     def ready(self) -> None:
-        from proxy.services import start_v2ray
+        from proxy.services import start_v2ray, start_scheduler
         start_v2ray()
+        start_scheduler()
