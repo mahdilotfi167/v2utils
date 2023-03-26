@@ -1,10 +1,9 @@
 from v2client.v5.api import V2ray
-from v2client.v5.client import Client
 from proxy.models import Inbound, User
 from django.conf import settings
+from django.db.models import F, Q
 
 v2api = None
-v2client = None
 
 
 def generate_config():
@@ -12,8 +11,10 @@ def generate_config():
 
 
 def make_inbounds():
-    users = User.objects.all()
-    return [*settings.INBOUNDS_CONF] + [inbound.get_server_config(users) for inbound in Inbound.objects.all()]
+    user_query = Q(enabled=True) & (Q(max__isnull=True) | Q(max__gt=F('up') + F('down')))
+    users = User.objects.filter(user_query).order_by('id')
+    return [*settings.INBOUNDS_CONF] + [inbound.get_server_config(users) for inbound in
+                                        Inbound.objects.all().order_by('id')]
 
 
 def make_config():
@@ -30,10 +31,7 @@ def make_config():
 
 def start_v2ray():
     global v2api
-    global v2client
+    config = make_config()
     if v2api is None:
-        config = make_config()
-        v2api = V2ray(settings.V2RAY_BINARY_PATH, config)
-    if v2client is None:
-        v2client = Client(settings.API_ADDRESS, settings.API_PORT)
-    # v2api.start()
+        v2api = V2ray(settings.V2RAY_BINARY_PATH, settings.API_ADDRESS, settings.API_PORT)
+    v2api.start(config)
