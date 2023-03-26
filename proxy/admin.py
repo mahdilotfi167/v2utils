@@ -55,6 +55,7 @@ class VmessAdmin(PolymorphicInlineSupportMixin, InboundChildAdmin):
 
 class FallbackInline(admin.StackedInline):
     model = Fallback
+    extra = 0
 
 
 @admin.register(Vless)

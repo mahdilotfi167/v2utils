@@ -2,7 +2,7 @@ import os
 
 from .base import *
 
-if os.environ.get('TERMHUB_ENV', 'dev') == 'prod':
+if os.environ.get('V2ENV', 'dev') == 'prod':
     from .prod import *
 else:
     from .dev import *

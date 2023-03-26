@@ -1,4 +1,4 @@
-FROM python:3-alpine
+FROM python:3.9-alpine
 
 # Install v2ray
 WORKDIR /root
@@ -20,4 +20,6 @@ RUN set -ex \
 
 COPY . .
 
-ENTRYPOINT ["run.sh"]
+ENV V2ENV=prod
+
+ENTRYPOINT ["/bin/sh", "-c", "/app/run.sh"]
