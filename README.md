@@ -11,6 +11,7 @@ V2ray utilities
 - [ ] Add logs and errors to admin panel
 - [ ] Partitioned django admin options
 - [ ] Two types of fallbacks (A fallbask can point to an inbound and a UDS will be created for share same address)
+- [ ] Telegram bot can join channels and groups and automatically create user for all members
 
 ### How to?
 #### Run project
