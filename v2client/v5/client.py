@@ -1,8 +1,10 @@
+import logging
 import grpc
 from typing import Iterable
 from .proto.app.stats.command import command_pb2_grpc as stats_command_pb2_grpc
 from .proto.app.stats.command import command_pb2 as stats_command_pb2
 
+logger = logging.getLogger(__name__)
 
 class Traffic:
     def __init__(self, up, down):
@@ -33,7 +35,11 @@ class UserTraffic(Traffic):
 
 class Client:
     def __init__(self, address, port):
-        self._channel = grpc.insecure_channel("%s:%s" % (address, port))
+        self._dest = "%s:%s" % (address, port)
+        self._channel = grpc.insecure_channel(self._dest)
+        
+    def reconnect(self):
+        self._channel = grpc.insecure_channel(self._dest)
 
     def _get_traffics(self, name, reset) -> Iterable[Traffic]:
         stub = stats_command_pb2_grpc.StatsServiceStub(self._channel)
@@ -44,12 +50,12 @@ class Client:
             ))
             return res.stat
         except grpc.RpcError as e:
-            raise RuntimeError("Count not connect to the server") from e
+            logger.error(e)
 
     @staticmethod
     def __parse_stat(stat):
         the_type, the_id, _, link_type = stat.split('>>>')
-        link = link_type.rstrip('link')
+        link = link_type.removesuffix('link')
         return the_type, the_id, link
 
     def get_user_traffics(self, reset=True) -> Iterable[UserTraffic]:

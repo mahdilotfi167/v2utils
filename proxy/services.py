@@ -4,7 +4,7 @@ from django.conf import settings
 from django.db.models import F, Q, Value
 from utils.schedule import Scheduler
 
-v2api: V2ray
+v2api: V2ray = None
 
 
 def generate_inbounds_config():
@@ -35,6 +35,7 @@ def start_v2ray():
 
 
 def update_traffics():
+    global v2api
     user_traffics = v2api.get_user_traffics(reset=True)
     traffics_by_username = dict()
     for traffic in user_traffics:
@@ -54,6 +55,7 @@ def update_traffics():
 
 
 def refresh_v2ray():
+    global v2api
     update_traffics()
     config = generate_config()
     v2api.refresh_config(config)
@@ -61,5 +63,5 @@ def refresh_v2ray():
 
 def start_scheduler():
     scheduler = Scheduler()
-    scheduler.every(20).seconds.do(refresh_v2ray)
+    scheduler.every(15).seconds.do(refresh_v2ray)
     scheduler.run_continuously()
