@@ -5,6 +5,13 @@ from django.conf import settings
 from uuid import uuid4
 
 
+class Group(models.Model):
+    title = models.CharField(max_length=100, unique=True)
+    
+    def __str__(self):
+        return self.title
+
+
 class User(models.Model):
     username = models.CharField(max_length=100, unique=True)
     uuid = models.UUIDField(unique=True, default=uuid4)
@@ -18,6 +25,14 @@ class User(models.Model):
 
     def __repr__(self):
         return self.__str__()
+    
+
+class UserGroup(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE)
+    up = models.PositiveBigIntegerField(default=0)
+    down = models.PositiveBigIntegerField(default=0)
+    max = models.PositiveBigIntegerField(null=True, blank=True)
 
 
 class Inbound(PolymorphicModel):
@@ -84,6 +99,7 @@ class InboundAddress(models.Model):
     address = models.CharField(max_length=255)
     port = models.PositiveIntegerField()
     inbound = models.ForeignKey(Inbound, on_delete=models.CASCADE, related_name='public_addresses')
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='public_addresses')
 
 
 class Vmess(Inbound):
