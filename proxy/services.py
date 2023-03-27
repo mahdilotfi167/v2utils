@@ -59,9 +59,14 @@ def refresh_v2ray():
     update_traffics()
     config = generate_config()
     v2api.refresh_config(config)
+    
+
+def sync_traffics():
+    pass
 
 
 def start_scheduler():
     scheduler = Scheduler()
     scheduler.every(15).seconds.do(refresh_v2ray)
+    scheduler.every(1).minutes.do(sync_traffics)
     scheduler.run_continuously()

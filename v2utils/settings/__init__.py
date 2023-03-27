@@ -11,5 +11,3 @@ else:
 
 from .jet import *
 from .v2ray import *
-from .telbot import *
-from .faker import *
