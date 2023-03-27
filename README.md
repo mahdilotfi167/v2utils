@@ -12,6 +12,8 @@ V2ray utilities
 - [ ] Partitioned django admin options
 - [ ] Two types of fallbacks (A fallbask can point to an inbound and a UDS will be created for share same address)
 - [ ] Sniffing options (Enable sniffing for users to view traffic and used websites)
+- [ ] Telegram bot can join channels and groups and automatically create user for all members
+- [ ] User groups (each inbound will be created in a group and a user can have many groups) for handling user restrictions
 
 ### How to?
 #### Run project
