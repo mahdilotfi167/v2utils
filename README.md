@@ -14,6 +14,7 @@ V2ray utilities
 - [ ] Sniffing options (Enable sniffing for users to view traffic and used websites)
 - [ ] Telegram bot can join channels and groups and automatically create user for all members
 - [ ] User groups (each inbound will be created in a group and a user can have many groups) for handling user restrictions
+- [ ] Automatic self-signed certificate generation
 
 ### How to?
 #### Run project
