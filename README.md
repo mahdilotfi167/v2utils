@@ -26,6 +26,7 @@ A multi-user, graphical and distributed management application for V2ray with ma
 - [ ] User groups (each inbound will be created in a group and a user can have many groups) for handling user restrictions
 - [ ] Automatic self-signed certificate generation
 - [ ] IP limitation options (using access logs)
+- [ ] Import inbound from json file
 
 ### How to?
 #### Run project
