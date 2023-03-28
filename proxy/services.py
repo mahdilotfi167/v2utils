@@ -3,9 +3,45 @@ from proxy.models import Inbound, User
 from django.conf import settings
 from django.db.models import F, Q, Value
 from utils.schedule import Scheduler
+from bot.handlers import Bot
+from bot.decorators import user_required
+
+
+class SubBot(Bot):
+    user_query = User.objects.all()
+
+    @user_required
+    def handle_start(self, message):
+        return (
+            'Welcome to proxy service bot\n'
+            'You can use /help to get more information\n'
+        )
+        
+    @user_required
+    def handle_help(self, message):
+        return (
+            'Commands:\n'
+            '/start - start bot\n'
+            '/help - show this help\n'
+            '/traffic - show your current traffic\n'
+            '/sub - get subscription link\n'
+            '/vmess - get vmess configs\n'
+            '/vless - get vless configs\n'
+        )
+        
+    @user_required
+    def handle_traffic(self, message):
+        return (
+            f'\u2191 {message.user.up / 1024 / 1024:.2f} MiB\n'
+            f'\u2193 {message.user.down / 1024 / 1024:.2f} MiB\n'
+            f'Total: {(message.user.up + message.user.down) / 1024 / 1024:.2f} MiB\n'
+            f'Limit: {message.user.max / 1024 / 1024:.2f} MiB\n'
+            f'Remaining: {(message.user.max - message.user.up - message.user.down) / 1024 / 1024:.2f} MiB\n'
+        )
 
 v2api: V2ray = None
-
+bot: SubBot = None
+    
 
 def generate_inbounds_config():
     user_query = Q(enabled=True) & (Q(max__isnull=True) | Q(max__gt=F('up') + F('down')))
@@ -70,3 +106,15 @@ def start_scheduler():
     scheduler.every(15).seconds.do(refresh_v2ray)
     scheduler.every(1).minutes.do(sync_traffics)
     scheduler.run_continuously()
+
+
+def restart_bot():
+    global bot
+    if bot:
+        bot.close()
+    bot = SubBot('6197957092:AAE_B0rdrFBunU8vE8pHmLHztULjCcmMBWI')
+    bot.run_polling()
+
+
+def start_bot():
+    restart_bot()

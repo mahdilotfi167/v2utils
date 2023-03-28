@@ -8,7 +8,8 @@ class ProxyConfig(AppConfig):
 
     def ready(self) -> None:
         from django.conf import settings
-        from proxy.services import start_v2ray, start_scheduler
+        from proxy.services import start_v2ray, start_scheduler, start_bot
         if bool(os.environ.get('RUN_MAIN')) or settings.IS_PROD:
             start_v2ray()
             start_scheduler()
+            start_bot()

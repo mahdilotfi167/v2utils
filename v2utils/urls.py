@@ -7,5 +7,6 @@ urlpatterns = [
     path('jet/', include('jet.urls', 'jet')),
     path('jet/dashboard/', include('jet.dashboard.urls', 'jet-dashboard')),
     path('admin/', admin.site.urls),
-    path('proxy/', include('proxy.urls'))
+    path('proxy/', include('proxy.urls')),
+    path('bot/', include('bot.urls')),
 ]
