@@ -2,6 +2,11 @@
 
 ARCH="64"
 TAG="v5.3.0"
+TMP_DIR = /tmp/v2ray
+
+# Creating temp working directory
+mkdir -p $TMP_DIR
+cd $TMP_DIR
 
 # Download v2ray binary
 V2RAY_FILE="v2ray-linux-${ARCH}.zip"
@@ -17,9 +22,8 @@ echo "Download binary file: ${V2RAY_FILE} completed"
 # Prepare
 echo "Prepare to use"
 unzip -qq v2ray.zip && chmod +x v2ray
-mv v2ray /usr/bin/
+mv v2ray /usr/local/bin/
 mv geosite.dat geoip.dat /usr/local/share/v2ray/
-mv config.json /etc/v2ray/config.json
 
 # Clean
 rm -rf ${PWD}/*
