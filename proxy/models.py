@@ -5,13 +5,22 @@ from django.conf import settings
 from uuid import uuid4
 
 
-class User(models.Model):
-    username = models.CharField(max_length=100, unique=True)
-    uuid = models.UUIDField(unique=True, default=uuid4)
-    enabled = models.BooleanField(default=True)
+class TrafficStats(models.Model):
     max = models.PositiveBigIntegerField(null=True, blank=True)
     up = models.PositiveBigIntegerField(default=0)
     down = models.PositiveBigIntegerField(default=0)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    last_reset = models.DateTimeField(auto_now_add=True)
+    reset_period = models.DurationField(null=True, blank=True)
+    
+    class Meta:
+        abstract = True
+
+
+class User(TrafficStats):
+    username = models.CharField(max_length=100, unique=True)
+    uuid = models.UUIDField(unique=True, default=uuid4)
+    enabled = models.BooleanField(default=True)
 
     def __str__(self):
         return self.username
@@ -20,15 +29,12 @@ class User(models.Model):
         return self.__str__()
 
 
-class Inbound(PolymorphicModel):
+class Inbound(PolymorphicModel, TrafficStats):
     tag = models.CharField(max_length=100, unique=True)
     listen = models.CharField(max_length=255)
     port = models.PositiveIntegerField(blank=True, null=True)
     sniffing_enabled = models.BooleanField(default=False)
     sniffing_dest_override = models.CharField(max_length=255, blank=True, null=True)
-    max = models.PositiveBigIntegerField(null=True, blank=True)
-    up = models.PositiveBigIntegerField(default=0)
-    down = models.PositiveBigIntegerField(default=0)
 
     @property
     def protocol(self):

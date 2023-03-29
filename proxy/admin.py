@@ -10,6 +10,24 @@ from polymorphic.admin import (
 )
 
 
+TRAFFIC_FIELDSETS = (
+    'max',
+    'up',
+    'down',
+    'expires_at',
+    'reset_period',
+    'last_reset',
+)
+
+INBOUND_FIELDSETS = (
+    'tag',
+    'listen',
+    'port',
+    'sniffing_enabled',
+    'sniffing_dest_override',
+)
+
+
 @admin.register(Certificate)
 class CertificateAdmin(admin.ModelAdmin):
     pass
@@ -51,6 +69,17 @@ class InboundAddressInline(admin.TabularInline):
 class VmessAdmin(PolymorphicInlineSupportMixin, InboundChildAdmin):
     base_model = Vmess
     inlines = (TransportInline, InboundAddressInline)
+    readonly_fields = ('up', 'down', 'last_reset')
+    fieldsets = (
+        (None, {
+            "fields": (
+                *INBOUND_FIELDSETS,
+            ),
+        }),
+        ('Traffic', {
+            "fields": TRAFFIC_FIELDSETS
+        })
+    )
 
 
 class FallbackInline(admin.StackedInline):
@@ -62,6 +91,18 @@ class FallbackInline(admin.StackedInline):
 class VlessAdmin(PolymorphicInlineSupportMixin, InboundChildAdmin):
     base_model = Vless
     inlines = (TransportInline, FallbackInline, InboundAddressInline)
+    readonly_fields = ('up', 'down', 'last_reset')
+    fieldsets = (
+        (None, {
+            "fields": (
+                *INBOUND_FIELDSETS,
+                'decryption',
+            ),
+        }),
+        ('Traffic', {
+            "fields": TRAFFIC_FIELDSETS
+        })
+    )
 
 
 @admin.register(Inbound)
@@ -69,11 +110,23 @@ class InboundAdmin(PolymorphicInlineSupportMixin, PolymorphicParentModelAdmin):
     base_model = Inbound
     child_models = (Vmess, Vless)
     list_filter = (PolymorphicChildModelFilter,)
-    readonly_fields = ('up', 'down')
+    readonly_fields = ('up', 'down', 'last_reset')
     list_display = ('tag', 'up', 'down')
 
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    readonly_fields = ('up', 'down')
+    readonly_fields = ('up', 'down', 'last_reset')
     list_display = ('username', 'up', 'down')
+    fieldsets = (
+        (None, {
+            "fields": (
+                'username',
+                'uuid',
+                'enabled'
+            ),
+        }),
+        ('Traffic', {
+            "fields": TRAFFIC_FIELDSETS
+        })
+    )

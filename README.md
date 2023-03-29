@@ -27,6 +27,10 @@ A multi-user, graphical and distributed management application for V2ray with ma
 - [ ] Automatic self-signed certificate generation
 - [ ] IP limitation options (using access logs)
 - [ ] Import inbound from json file
+- [ ] Traffic limitations for Inbound level, Group level, and User level
+- [ ] Automatic Expiration and reset period
+- [ ] Useful APIs
+- [ ] Passphrase authentication
 
 ### How to?
 #### Run project
