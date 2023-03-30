@@ -1,6 +1,6 @@
 from django.utils import timezone
 from v2client.v5.api import V2ray
-from proxy.models import Inbound, User, Group
+from proxy.models import *
 from django.conf import settings
 from django.db.models import F, Q, Value, Prefetch
 from utils.schedule import Scheduler
@@ -15,6 +15,10 @@ def generate_inbounds_config():
     return [*settings.INBOUNDS_CONF] + [
         inbound.get_server_config() for inbound in Inbound.objects.filter(
             enabled_query
+        ).prefetch_related( # select_related won't work here, because of polymorphic models
+            Prefetch('transport', queryset=Transport.objects.all())
+        ).prefetch_related(
+            'transport__tls_certificates'
         ).prefetch_related(
             Prefetch('group', queryset=Group.objects.filter(enabled_query).order_by('id'))
         ).prefetch_related(
