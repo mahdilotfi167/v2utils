@@ -1,4 +1,5 @@
 # v2utils
+![Redeploy Server Status](https://github.com/mahdilotfi167/v2utils/actions/workflows/django.yml/badge.svg)  
 A multi-user, graphical and distributed management application for V2ray with many usefull features.
 ## Notes
 - Supported protocols: Vmess, Vless
@@ -34,6 +35,8 @@ A multi-user, graphical and distributed management application for V2ray with ma
 - [ ] Useful APIs
 - [ ] Passphrase authentication
 - [X] Automatic UDS deletions
+- [ ] Unit tests and github workflow
+- [ ] Documentation and github pages
 
 ### How to?
 #### Run project
