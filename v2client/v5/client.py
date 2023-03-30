@@ -1,10 +1,8 @@
-import logging
 import grpc
 from typing import Iterable
 from .proto.app.stats.command import command_pb2_grpc as stats_command_pb2_grpc
 from .proto.app.stats.command import command_pb2 as stats_command_pb2
 
-logger = logging.getLogger(__name__)
 
 class Traffic:
     def __init__(self, up, down):
@@ -50,7 +48,7 @@ class Client:
             ))
             return res.stat
         except grpc.RpcError as e:
-            logger.error(e)
+            raise RuntimeError('Could not connect to v2ray api') from e
 
     @staticmethod
     def __parse_stat(stat):
@@ -67,16 +65,3 @@ class Client:
             traffic = traffics_by_email.get(email)
             setattr(traffic, link, stat.value)
         return list(traffics_by_email.values())
-
-    def get_inbound_traffics(self, reset=True) -> Iterable[InboundTraffic]:
-        traffics_by_tag = dict()
-        for stat in self._get_traffics(name='inbound', reset=reset):
-            _, tag, link = self.__parse_stat(stat.name)
-            if tag not in traffics_by_tag:
-                traffics_by_tag[tag] = InboundTraffic(tag, 0, 0)
-            traffic = traffics_by_tag.get(tag)
-            setattr(traffic, link, stat.value)
-        return list(traffics_by_tag.values())
-
-    def get_all_traffics(self, reset=True) -> Iterable[Traffic]:
-        return self.get_inbound_traffics(reset) + self.get_user_traffics(reset)

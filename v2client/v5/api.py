@@ -22,7 +22,7 @@ class V2ray:
         self._binary_path = binary_path
         self._process: Popen = None
         self._client = Client(api_address, api_port)
-        self._current_config: str = '{}'
+        self._current_config = dict()
 
     @staticmethod
     def _write_config(config, path):
@@ -68,13 +68,11 @@ class V2ray:
         return False
 
     def get_user_traffics(self, reset=True):
-        return self._client.get_user_traffics(reset=reset)
-
-    def get_inbound_traffics(self, reset=True):
-        return self._client.get_inbound_traffics(reset=reset)
-
-    def get_all_traffics(self, reset):
-        return self._client.get_all_traffics(reset=reset)
+        try:
+            return self._client.get_user_traffics(reset=reset)
+        except RuntimeError as e:
+            logger.warning(e)
+            return []
 
     def start(self, config):
         self.refresh_config(config)
