@@ -34,6 +34,8 @@ A multi-user, graphical and distributed management application for V2ray with ma
 - [ ] Useful APIs
 - [ ] Passphrase authentication
 - [X] Automatic UDS deletions
+- [ ] Unit tests and github workflow
+- [ ] Documentation and github pages
 
 ### How to?
 #### Run project
