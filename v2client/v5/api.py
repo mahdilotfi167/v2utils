@@ -41,8 +41,9 @@ class V2ray:
                     'V2ray restart failed, try to recover from last config')
             self._client.reconnect()
 
-    def __remove_unix_domain_sockets(self):
-        for inbound in self._current_config.get('inbounds', []):
+    @staticmethod
+    def __remove_unix_domain_sockets(config):
+        for inbound in config.get('inbounds', []):
             if is_uds_address(inbound.get('listen', '0.0.0.0')):
                 try:
                     os.remove(inbound.get['listen'])
@@ -54,7 +55,7 @@ class V2ray:
         if self._process:
             self._process.terminate()
         # Remove unix domain sockets to prevent from address already in use errors
-        self.__remove_unix_domain_sockets()
+        self.__remove_unix_domain_sockets(config)
         self._process = Popen(
             [self._binary_path, 'run', '-c', self.CONFIG_PATH],
             stdin=PIPE,
