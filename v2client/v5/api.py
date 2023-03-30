@@ -1,9 +1,18 @@
+import os
 import logging
 from subprocess import Popen, PIPE
 from json import dumps
 from .client import Client
 
 logger = logging.getLogger(__name__)
+
+
+def is_uds_address(addr):
+    return addr.startswith('/')
+
+
+def is_abstract_uds_address(addr):
+    return addr.startswith('@')
 
 
 class V2ray:
@@ -28,13 +37,24 @@ class V2ray:
                 logger.warning('V2ray restarted')
             else:
                 self._restart_process(self._current_config)
-                logger.error('V2ray restart failed, try to recover from last config')
+                logger.error(
+                    'V2ray restart failed, try to recover from last config')
             self._client.reconnect()
+
+    def __remove_unix_domain_sockets(self):
+        for inbound in self._current_config.get('inbounds', []):
+            if is_uds_address(inbound.get('listen', '0.0.0.0')):
+                try:
+                    os.remove(inbound.get['listen'])
+                except OSError:
+                    pass
 
     def _restart_process(self, config):
         self._write_config(config, self.CONFIG_PATH)
         if self._process:
             self._process.terminate()
+        # Remove unix domain sockets to prevent from address already in use errors
+        self.__remove_unix_domain_sockets()
         self._process = Popen(
             [self._binary_path, 'run', '-c', self.CONFIG_PATH],
             stdin=PIPE,
@@ -44,7 +64,7 @@ class V2ray:
             logger.warning(output)
             if 'started' in output:
                 return True
-        return False    
+        return False
 
     def get_user_traffics(self, reset=True):
         return self._client.get_user_traffics(reset=reset)
@@ -57,4 +77,3 @@ class V2ray:
 
     def start(self, config):
         self.refresh_config(config)
-

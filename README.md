@@ -33,7 +33,7 @@ A multi-user, graphical and distributed management application for V2ray with ma
 - [X] Automatic Expiration and reset period
 - [ ] Useful APIs
 - [ ] Passphrase authentication
-- [ ] Automatic UDS deletions
+- [X] Automatic UDS deletions
 
 ### How to?
 #### Run project
