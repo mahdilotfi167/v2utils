@@ -1,17 +1,26 @@
+from django.utils import timezone
 from v2client.v5.api import V2ray
-from proxy.models import Inbound, User
+from proxy.models import Inbound, User, Group
 from django.conf import settings
-from django.db.models import F, Q, Value
+from django.db.models import F, Q, Value, Prefetch
 from utils.schedule import Scheduler
 
 v2api: V2ray = None
 
 
 def generate_inbounds_config():
-    user_query = Q(enabled=True) & (Q(max__isnull=True) | Q(max__gt=F('up') + F('down')))
-    users = User.objects.filter(user_query).order_by('id')
-    return [*settings.INBOUNDS_CONF] + [inbound.get_server_config(users) for inbound in
-                                        Inbound.objects.all().order_by('id')]
+    enabled_query = (Q(enabled=True) & 
+                     (Q(max__isnull=True) | Q(max__gt=F('up') + F('down'))) & 
+                     (Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now())))
+    return [*settings.INBOUNDS_CONF] + [
+        inbound.get_server_config() for inbound in Inbound.objects.filter(
+            enabled_query
+        ).prefetch_related(
+            Prefetch('group', queryset=Group.objects.filter(enabled_query).order_by('id'))
+        ).prefetch_related(
+            Prefetch('group__users', queryset=User.objects.filter(enabled_query).order_by('id'))
+        ).order_by('id')
+    ]
 
 
 def generate_config():
@@ -32,26 +41,47 @@ def start_v2ray():
     if v2api is None:
         v2api = V2ray(settings.V2RAY_BINARY_PATH, settings.API_ADDRESS, settings.API_PORT)
     v2api.start(config)
+    
+    
+def reset_traffic(queryset):
+    queryset.update(
+        up=0,
+        down=0,
+        last_reset=Value(timezone.now()),
+    )
 
 
 def update_traffics():
     global v2api
     user_traffics = v2api.get_user_traffics(reset=True)
     traffics_by_username = dict()
+    traffics_by_tag = dict()
     for traffic in user_traffics:
-        username, _ = traffic.email.split('@')
+        username, inbound_tag = traffic.email.split('@')
         up, down = traffics_by_username.get(username, (0, 0))
         traffics_by_username[username] = (up + traffic.up, down + traffic.down)
+        traffics_by_tag[inbound_tag] = (up + traffic.up, down + traffic.down)
+    reset_traffic(User.objects.filter(last_reset__lte=Value(timezone.now()) - F('reset_period')))
+    reset_traffic(Group.objects.filter(last_reset__lte=Value(timezone.now()) - F('reset_period')))
+    reset_traffic(Inbound.objects.filter(last_reset__lte=Value(timezone.now()) - F('reset_period')))
     for username, traffic in traffics_by_username.items():
         up, down = traffic
-        if not up and not down:
-            continue
-        User.objects.filter(
-            username=username
-        ).update(
-            up=F('up') + Value(up),
-            down=F('down') + Value(down),
-        )
+        if up or down:
+            User.objects.filter(username=username).update(
+                up=F('up') + Value(up),
+                down=F('down') + Value(down),
+            )
+    for tag, traffic in traffics_by_tag.items():
+        up, down = traffic
+        if up or down:
+            Inbound.objects.filter(tag=tag).update(
+                up=F('up') + Value(up),
+                down=F('down') + Value(down),
+            )
+            Group.objects.filter(inbounds__tag=tag).update(
+                up=F('up') + Value(up),
+                down=F('down') + Value(down),
+            )
 
 
 def refresh_v2ray():

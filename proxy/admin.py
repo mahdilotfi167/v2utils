@@ -1,5 +1,5 @@
 from django.contrib import admin
-
+from proxy import services
 from proxy.models import *
 from polymorphic.admin import (
     PolymorphicParentModelAdmin,
@@ -11,6 +11,7 @@ from polymorphic.admin import (
 
 
 TRAFFIC_FIELDSETS = (
+    'enabled',
     'max',
     'up',
     'down',
@@ -25,12 +26,36 @@ INBOUND_FIELDSETS = (
     'port',
     'sniffing_enabled',
     'sniffing_dest_override',
+    'group',
 )
+
+
+@admin.action
+def reset_traffics(modeladmin, request, queryset):
+    services.reset_traffic(queryset)
 
 
 @admin.register(Certificate)
 class CertificateAdmin(admin.ModelAdmin):
     pass
+
+
+@admin.register(Group)
+class GroupAdmin(admin.ModelAdmin):
+    list_display = ('title', 'up', 'down')
+    readonly_fields = ('up', 'down', 'last_reset')
+    actions = (reset_traffics,)
+    fieldsets = (
+        (None, {
+            "fields": (
+                'title',
+            ),
+        }),
+        ('Traffic', {
+            "fields": TRAFFIC_FIELDSETS
+        })
+    )
+    
 
 
 class TransportInline(StackedPolymorphicInline):
@@ -108,6 +133,7 @@ class VlessAdmin(PolymorphicInlineSupportMixin, InboundChildAdmin):
 @admin.register(Inbound)
 class InboundAdmin(PolymorphicInlineSupportMixin, PolymorphicParentModelAdmin):
     base_model = Inbound
+    actions = (reset_traffics,)
     child_models = (Vmess, Vless)
     list_filter = (PolymorphicChildModelFilter,)
     readonly_fields = ('up', 'down', 'last_reset')
@@ -117,13 +143,14 @@ class InboundAdmin(PolymorphicInlineSupportMixin, PolymorphicParentModelAdmin):
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     readonly_fields = ('up', 'down', 'last_reset')
+    actions = (reset_traffics,)
     list_display = ('username', 'up', 'down')
     fieldsets = (
         (None, {
             "fields": (
                 'username',
                 'uuid',
-                'enabled'
+                'groups',
             ),
         }),
         ('Traffic', {

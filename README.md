@@ -13,24 +13,27 @@ A multi-user, graphical and distributed management application for V2ray with ma
 ### Incoming Improvements
 - [ ] Fake Traffic generator
 - [ ] User status telegram bot
+- [ ] Add Trojan support
+- [ ] Admin dashboard and Telegram bot log handlers
 - [X] Custom admin page for user configurations (telegram token, binary path, traffic generation ratio, ...)
 - [X] Store configurations in file and load a copy in memory for performance purposes
-- [ ] Add expiration time
+- [X] Add expiration time
 - [ ] Show and Get traffic values in human readable format (B, MB, GB, ...)
 - [ ] Quick setup with docker (Nginx, V2utils, DNS cache service, Distributed database, ...)
 - [ ] Add logs and errors to admin panel (read by grpc and LogsService)
-- [ ] Partitioned django admin options
+- [X] Partitioned django admin options
 - [ ] Two types of fallbacks (A fallbask can point to an inbound and a UDS will be created for share same address)
 - [ ] Sniffing options (Enable sniffing for users to view traffic and used websites)
 - [ ] Telegram bot can join channels and groups and automatically create user for all members
-- [ ] User groups (each inbound will be created in a group and a user can have many groups) for handling user restrictions
+- [X] User groups (each inbound will be created in a group and a user can have many groups) for handling user restrictions
 - [ ] Automatic self-signed certificate generation
 - [ ] IP limitation options (using access logs)
 - [ ] Import inbound from json file
-- [ ] Traffic limitations for Inbound level, Group level, and User level
-- [ ] Automatic Expiration and reset period
+- [X] Traffic limitations for Inbound level, Group level, and User level
+- [X] Automatic Expiration and reset period
 - [ ] Useful APIs
 - [ ] Passphrase authentication
+- [ ] Automatic UDS deletions
 
 ### How to?
 #### Run project

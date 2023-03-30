@@ -6,6 +6,7 @@ from uuid import uuid4
 
 
 class TrafficStats(models.Model):
+    enabled = models.BooleanField(default=True)
     max = models.PositiveBigIntegerField(null=True, blank=True)
     up = models.PositiveBigIntegerField(default=0)
     down = models.PositiveBigIntegerField(default=0)
@@ -15,12 +16,22 @@ class TrafficStats(models.Model):
     
     class Meta:
         abstract = True
+        
+        
+class Group(TrafficStats):
+    title = models.CharField(max_length=100, unique=True)
+    
+    def __str__(self):
+        return self.title
+    
+    def __repr__(self):
+        return self.__str__()
 
 
 class User(TrafficStats):
     username = models.CharField(max_length=100, unique=True)
     uuid = models.UUIDField(unique=True, default=uuid4)
-    enabled = models.BooleanField(default=True)
+    groups = models.ManyToManyField(Group, related_name='users')
 
     def __str__(self):
         return self.username
@@ -35,6 +46,7 @@ class Inbound(PolymorphicModel, TrafficStats):
     port = models.PositiveIntegerField(blank=True, null=True)
     sniffing_enabled = models.BooleanField(default=False)
     sniffing_dest_override = models.CharField(max_length=255, blank=True, null=True)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='inbounds', blank=True, null=True)
 
     @property
     def protocol(self):
@@ -63,7 +75,9 @@ class Inbound(PolymorphicModel, TrafficStats):
             'clients': clients,
         }
 
-    def get_server_config(self, users: Iterable[User]):
+    def get_server_config(self):
+        users = self.group.users.all() if self.group else User.objects.none()
+        
         inbound_config = {'listen': self.listen, 'protocol': self.protocol}
 
         if self.tag:
