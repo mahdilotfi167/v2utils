@@ -16,13 +16,15 @@ def generate_inbounds_config():
         inbound.get_server_config() for inbound in Inbound.objects.filter(
             enabled_query
         ).prefetch_related( # select_related won't work here, because of polymorphic models
-            Prefetch('transport', queryset=Transport.objects.all())
+            Prefetch('transport', queryset=Transport.objects.all().order_by('id'))
         ).prefetch_related(
-            'transport__tls_certificates'
+            Prefetch('transport__tls_certificates', queryset=Certificate.objects.all().order_by('id'))
         ).prefetch_related(
             Prefetch('group', queryset=Group.objects.filter(enabled_query).order_by('id'))
         ).prefetch_related(
-            Prefetch('group__users', queryset=User.objects.filter(enabled_query).order_by('id'))
+            Prefetch('group__memberships', queryset=Membership.objects.filter(enabled_query).order_by('id'))
+        ).prefetch_related(
+            Prefetch('group__memberships__user', queryset=User.objects.filter(enabled_query).order_by('id'))
         ).order_by('id')
     ]
 
@@ -60,14 +62,26 @@ def update_traffics():
     user_traffics = v2api.get_user_traffics(reset=True)
     traffics_by_username = dict()
     traffics_by_tag = dict()
-    for traffic in user_traffics:
-        username, inbound_tag = traffic.email.split('@')
-        up, down = traffics_by_username.get(username, (0, 0))
-        traffics_by_username[username] = (up + traffic.up, down + traffic.down)
-        traffics_by_tag[inbound_tag] = (up + traffic.up, down + traffic.down)
+    
     reset_traffic(User.objects.filter(last_reset__lte=Value(timezone.now()) - F('reset_period')))
     reset_traffic(Group.objects.filter(last_reset__lte=Value(timezone.now()) - F('reset_period')))
     reset_traffic(Inbound.objects.filter(last_reset__lte=Value(timezone.now()) - F('reset_period')))
+    reset_traffic(Membership.objects.filter(last_reset__lte=Value(timezone.now()) - F('reset_period')))
+    
+    for traffic in user_traffics:
+        username, inbound_tag = traffic.email.split('@')
+        if traffic.up or traffic.down:
+            Membership.objects.filter(
+                user__username=username, 
+                group__inbounds__tag=inbound_tag
+            ).update(
+                up=F('up') + Value(traffic.up),
+                down=F('down') + Value(traffic.down),
+            )
+        up, down = traffics_by_username.get(username, (0, 0))
+        traffics_by_username[username] = (up + traffic.up, down + traffic.down)
+        up, down = traffics_by_tag.get(username, (0, 0))
+        traffics_by_tag[inbound_tag] = (up + traffic.up, down + traffic.down)
     for username, traffic in traffics_by_username.items():
         up, down = traffic
         if up or down:

@@ -13,17 +13,17 @@ class TrafficStats(models.Model):
     expires_at = models.DateTimeField(null=True, blank=True)
     last_reset = models.DateTimeField(auto_now_add=True)
     reset_period = models.DurationField(null=True, blank=True)
-    
+
     class Meta:
         abstract = True
-        
-        
+
+
 class Group(TrafficStats):
     title = models.CharField(max_length=100, unique=True)
-    
+
     def __str__(self):
         return self.title
-    
+
     def __repr__(self):
         return self.__str__()
 
@@ -31,10 +31,22 @@ class Group(TrafficStats):
 class User(TrafficStats):
     username = models.CharField(max_length=100, unique=True)
     uuid = models.UUIDField(unique=True, default=uuid4)
-    groups = models.ManyToManyField(Group, related_name='users')
 
     def __str__(self):
         return self.username
+
+    def __repr__(self):
+        return self.__str__()
+
+
+class Membership(TrafficStats):
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='memberships')
+    group = models.ForeignKey(
+        Group, on_delete=models.CASCADE, related_name='memberships')
+
+    def __str__(self):
+        return self.group.__str__()
 
     def __repr__(self):
         return self.__str__()
@@ -45,8 +57,10 @@ class Inbound(PolymorphicModel, TrafficStats):
     listen = models.CharField(max_length=255)
     port = models.PositiveIntegerField(blank=True, null=True)
     sniffing_enabled = models.BooleanField(default=False)
-    sniffing_dest_override = models.CharField(max_length=255, blank=True, null=True)
-    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='inbounds', blank=True, null=True)
+    sniffing_dest_override = models.CharField(
+        max_length=255, blank=True, null=True)
+    group = models.ForeignKey(
+        Group, on_delete=models.CASCADE, related_name='inbounds', blank=True, null=True)
 
     @property
     def protocol(self):
@@ -61,7 +75,8 @@ class Inbound(PolymorphicModel, TrafficStats):
     def _get_sniffing_config(self):
         sniffing = {'enabled': self.sniffing_enabled}
         if self.sniffing_dest_override:
-            sniffing['destOverride'] = [do.strip() for do in self.sniffing_dest_override.split(',')]
+            sniffing['destOverride'] = [do.strip()
+                                        for do in self.sniffing_dest_override.split(',')]
         return sniffing
 
     def _get_settings_config(self, users: Iterable[User]):
@@ -76,8 +91,10 @@ class Inbound(PolymorphicModel, TrafficStats):
         }
 
     def get_server_config(self):
-        users = self.group.users.all() if self.group else User.objects.none()
-        
+        users = [
+            membership.user for membership in self.group.memberships.all()
+        ] if self.group else User.objects.none()
+
         inbound_config = {'listen': self.listen, 'protocol': self.protocol}
 
         if self.tag:
@@ -103,7 +120,8 @@ class Inbound(PolymorphicModel, TrafficStats):
 class Address(models.Model):
     address = models.CharField(max_length=255)
     port = models.PositiveIntegerField()
-    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='public_addresses')
+    group = models.ForeignKey(
+        Group, on_delete=models.CASCADE, related_name='public_addresses')
 
 
 class Vmess(Inbound):
@@ -129,7 +147,8 @@ class Vless(Inbound):
             'decryption': self.decryption or 'none',
         }
         if self.fallbacks.exists():
-            res['fallbacks'] = [fb.get_server_config() for fb in self.fallbacks.all()]
+            res['fallbacks'] = [fb.get_server_config()
+                                for fb in self.fallbacks.all()]
         return res
 
 
@@ -173,14 +192,16 @@ class Transport(PolymorphicModel):
     tls = models.BooleanField(default=False)
     tls_alpn = models.CharField(max_length=255, blank=True, null=True)
     tls_certificates = models.ManyToManyField(Certificate, blank=True)
-    inbound = models.OneToOneField(Inbound, models.CASCADE, related_name='transport')
+    inbound = models.OneToOneField(
+        Inbound, models.CASCADE, related_name='transport')
 
     def get_server_config(self):
         stream_settings = dict()
         stream_settings['network'] = self.network
         if self.tls:
             stream_settings['security'] = 'tls'
-            certificates = [c.get_server_config() for c in self.tls_certificates.all()]
+            certificates = [c.get_server_config()
+                            for c in self.tls_certificates.all()]
             alpn = [a.strip() for a in self.tls_alpn.split(',')]
             stream_settings['tlsSettings'] = {
                 'certificates': certificates,
@@ -223,7 +244,8 @@ class Tcp(Transport):
     network = 'tcp'
     accept_proxy_protocol = models.BooleanField(default=False)
     header_type = models.CharField(max_length=100, default="none")
-    header_request_path = models.CharField(max_length=255, null=True, blank=True)
+    header_request_path = models.CharField(
+        max_length=255, null=True, blank=True)
 
     def get_server_config(self):
         tcp_settings = {
@@ -260,7 +282,8 @@ class Fallback(models.Model):
     path = models.CharField(max_length=100, blank=True, null=True)
     dest = models.CharField(max_length=100)
     xver = models.IntegerField(blank=True, null=True)
-    inbound = models.ForeignKey(Vless, on_delete=models.CASCADE, related_name='fallbacks')
+    inbound = models.ForeignKey(
+        Vless, on_delete=models.CASCADE, related_name='fallbacks')
 
     def get_server_config(self):
         res = {'dest': self.dest}

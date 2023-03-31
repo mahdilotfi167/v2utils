@@ -1,6 +1,7 @@
 from django.contrib import admin
 from proxy import services
 from proxy.models import *
+from jet.admin import CompactInline
 from polymorphic.admin import (
     PolymorphicParentModelAdmin,
     PolymorphicChildModelAdmin,
@@ -139,19 +140,35 @@ class InboundAdmin(PolymorphicInlineSupportMixin, PolymorphicParentModelAdmin):
     list_filter = (PolymorphicChildModelFilter,)
     readonly_fields = ('up', 'down', 'last_reset')
     list_display = ('tag', 'up', 'down')
+    
+    
+class MembershipInline(CompactInline):
+    model = Membership
+    extra = 1
+    readonly_fields = ('up', 'down', 'last_reset')
+    fieldsets = (
+        (None, {
+            "fields": (
+                'group',
+            ),
+        }),
+        ('Traffic', {
+            "fields": TRAFFIC_FIELDSETS
+        })
+    )
 
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     readonly_fields = ('up', 'down', 'last_reset')
     actions = (reset_traffics,)
+    inlines = (MembershipInline,)
     list_display = ('username', 'up', 'down')
     fieldsets = (
         (None, {
             "fields": (
                 'username',
                 'uuid',
-                'groups',
             ),
         }),
         ('Traffic', {
