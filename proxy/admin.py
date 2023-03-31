@@ -40,10 +40,16 @@ class CertificateAdmin(admin.ModelAdmin):
     pass
 
 
+class AddressInline(admin.TabularInline):
+    extra = 1
+    model = Address
+
+
 @admin.register(Group)
 class GroupAdmin(admin.ModelAdmin):
     list_display = ('title', 'up', 'down')
     readonly_fields = ('up', 'down', 'last_reset')
+    inlines = (AddressInline,)
     actions = (reset_traffics,)
     fieldsets = (
         (None, {
@@ -85,15 +91,10 @@ class InboundChildAdmin(PolymorphicChildModelAdmin):
     base_model = Inbound
 
 
-class InboundAddressInline(admin.TabularInline):
-    extra = 1
-    model = InboundAddress
-
-
 @admin.register(Vmess)
 class VmessAdmin(PolymorphicInlineSupportMixin, InboundChildAdmin):
     base_model = Vmess
-    inlines = (TransportInline, InboundAddressInline)
+    inlines = (TransportInline,)
     readonly_fields = ('up', 'down', 'last_reset')
     fieldsets = (
         (None, {
@@ -115,7 +116,7 @@ class FallbackInline(admin.StackedInline):
 @admin.register(Vless)
 class VlessAdmin(PolymorphicInlineSupportMixin, InboundChildAdmin):
     base_model = Vless
-    inlines = (TransportInline, FallbackInline, InboundAddressInline)
+    inlines = (TransportInline, FallbackInline)
     readonly_fields = ('up', 'down', 'last_reset')
     fieldsets = (
         (None, {

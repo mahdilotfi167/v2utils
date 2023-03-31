@@ -100,10 +100,10 @@ class Inbound(PolymorphicModel, TrafficStats):
         return self.__str__()
 
 
-class InboundAddress(models.Model):
+class Address(models.Model):
     address = models.CharField(max_length=255)
     port = models.PositiveIntegerField()
-    inbound = models.ForeignKey(Inbound, on_delete=models.CASCADE, related_name='public_addresses')
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='public_addresses')
 
 
 class Vmess(Inbound):
