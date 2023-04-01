@@ -1,10 +1,19 @@
+from .base import BASE_DIR
+
+CERT_FILES_BASE_DIR = BASE_DIR / '.certs'
+
 V2RAY_BINARY_PATH = "/usr/local/bin/v2ray"
 
 API_PORT = 10085
 API_ADDRESS = "127.0.0.1"
 
+
+LOG_BASE_DIR = BASE_DIR / 'logs'
+LOG_BASE_DIR.mkdir(parents=True, exist_ok=True)
+
 LOG_CONF = {
-    "loglevel": "info",
+    "loglevel": "warning",
+    "access": str(LOG_BASE_DIR / 'access.log'),
 }
 
 API_CONF = {
