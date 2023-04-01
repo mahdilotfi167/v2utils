@@ -107,6 +107,23 @@ class VmessAdmin(PolymorphicInlineSupportMixin, InboundChildAdmin):
             "fields": TRAFFIC_FIELDSETS
         })
     )
+    
+    
+@admin.register(Trojan)
+class TrojanAdmin(PolymorphicInlineSupportMixin, InboundChildAdmin):
+    base_model = Trojan
+    inlines = (TransportInline,)
+    readonly_fields = ('up', 'down', 'last_reset')
+    fieldsets = (
+        (None, {
+            "fields": (
+                *INBOUND_FIELDSETS,
+            ),
+        }),
+        ('Traffic', {
+            "fields": TRAFFIC_FIELDSETS
+        })
+    )
 
 
 class FallbackInline(admin.StackedInline):
@@ -136,7 +153,7 @@ class VlessAdmin(PolymorphicInlineSupportMixin, InboundChildAdmin):
 class InboundAdmin(PolymorphicInlineSupportMixin, PolymorphicParentModelAdmin):
     base_model = Inbound
     actions = (reset_traffics,)
-    child_models = (Vmess, Vless)
+    child_models = (Vmess, Vless, Trojan)
     list_filter = (PolymorphicChildModelFilter,)
     readonly_fields = ('up', 'down', 'last_reset')
     list_display = ('tag', 'up', 'down')

@@ -14,7 +14,7 @@ A multi-user, graphical and distributed management application for V2ray with ma
 ### Incoming Improvements
 - [ ] Fake Traffic generator
 - [ ] User status telegram bot
-- [ ] Add Trojan support
+- [X] Add Trojan support
 - [ ] Admin dashboard and Telegram bot log handlers
 - [X] Custom admin page for user configurations (telegram token, binary path, traffic generation ratio, ...)
 - [X] Store configurations in file and load a copy in memory for performance purposes
@@ -35,8 +35,9 @@ A multi-user, graphical and distributed management application for V2ray with ma
 - [ ] Useful APIs
 - [ ] Passphrase authentication
 - [X] Automatic UDS deletions
-- [ ] Unit tests and github workflow
+- [X] Unit tests and github workflow
 - [ ] Documentation and github pages
+- [ ] Automatic link generation
 
 ### How to?
 #### Run project

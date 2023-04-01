@@ -150,6 +150,19 @@ class Vless(Inbound):
             res['fallbacks'] = [fb.get_server_config()
                                 for fb in self.fallbacks.all()]
         return res
+    
+
+class Trojan(Inbound):
+    def _get_settings_config(self, users: Iterable[User]):
+        clients = list()
+        for user in users:
+            clients.append({
+                "email": "%s@%s" % (user.username, self.tag),
+                "password": str(user.uuid),
+            })
+        return {
+            'clients': clients,
+        }
 
 
 class Certificate(models.Model):
