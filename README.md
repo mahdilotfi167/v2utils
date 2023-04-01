@@ -36,7 +36,7 @@ A multi-user, graphical and distributed management application for V2ray with ma
 - [X] Automatic UDS deletions
 - [X] Unit tests and github workflow
 - [ ] Documentation and github pages
-- [ ] Automatic link generation
+- [X] Automatic link generation
 
 ### How to?
 #### Run project
