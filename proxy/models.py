@@ -1,6 +1,8 @@
 from django.db import models
 from polymorphic.models import PolymorphicModel
 from typing import Iterable
+from django.db.models import Q, F
+from django.utils import timezone
 from django.conf import settings
 from uuid import uuid4
 from base64 import b64encode
@@ -15,6 +17,10 @@ class TrafficStats(models.Model):
     expires_at = models.DateTimeField(null=True, blank=True)
     last_reset = models.DateTimeField(auto_now_add=True)
     reset_period = models.DurationField(null=True, blank=True)
+    
+    ENABLED_FILTER = (Q(enabled=True) & 
+                     (Q(max__isnull=True) | Q(max__gt=F('up') + F('down'))) & 
+                     (Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now())))
 
     class Meta:
         abstract = True
@@ -22,7 +28,13 @@ class TrafficStats(models.Model):
 
 class Group(TrafficStats):
     title = models.CharField(max_length=100, unique=True)
-    users = models.ManyToManyField('User', through='Membership')
+    users = models.ManyToManyField('User', through='Membership', related_name='groups')
+    
+    def get_client_links(self, user):
+        res = []
+        for address in self.public_addresses.all():
+            res.extend(inbound.get_client_link(address.address, address.port, user) for inbound in self.inbounds.all())
+        return res
 
     def __str__(self):
         return self.title
@@ -34,6 +46,13 @@ class Group(TrafficStats):
 class User(TrafficStats):
     username = models.CharField(max_length=100, unique=True)
     uuid = models.UUIDField(unique=True, default=uuid4)
+    
+    def get_server_links(self):
+        res = []
+        groups = [membership.group for membership in self.memberships.all()]
+        for group in groups:
+            res.extend(group.get_client_links(self))
+        return res
 
     def __str__(self):
         return self.username
@@ -71,7 +90,7 @@ class Inbound(PolymorphicModel, TrafficStats):
     def protocol(self):
         return self.__class__.__name__.lower()
 
-    def get_client_link(self, user: User) -> str:
+    def get_client_link(self, domain: str, port: int, user: User) -> str:
         raise NotImplementedError()
 
     def get_client_json(self, user: User) -> str:
@@ -124,22 +143,22 @@ class Inbound(PolymorphicModel, TrafficStats):
 
 class Address(models.Model):
     address = models.CharField(max_length=255)
-    port = models.PositiveIntegerField()
+    port = models.PositiveIntegerField(blank=True, null=True)
     group = models.ForeignKey(
         Group, on_delete=models.CASCADE, related_name='public_addresses')
 
 
 class Vmess(Inbound):
-    def get_client_link(self, domain: str, user: User) -> str:
+    def get_client_link(self, domain: str, port: int, user: User) -> str:
         transport_props = self.transport.get_link_props() if self.transport else {}
         props = {
             "add": domain,
             "aid": "0",
             "host": "",
-            "id": user.uuid,
-            "net": self.transport.network if self.transport else '',
-            "path": transport_props.get('path', ''),
-            "port": self.port,
+            "id": str(user.uuid),
+            "net": transport_props.get('network', ''),
+            "path": transport_props.get('path', '') or transport_props.get('serviceName', ''),
+            "port": str(port or self.port),
             "ps": self.name or self.tag,
             "scy": "none",
             "sni": self.sni,
@@ -148,7 +167,7 @@ class Vmess(Inbound):
             "type": transport_props.get('type', ''),
             "v": "2",
         }
-        return "vmess://%s" % b64encode(dumps(props)).decode('utf-8')
+        return "vmess://%s" % b64encode(dumps(props).encode('utf-8')).decode('utf-8')
 
     def get_client_json(self, user: User) -> str:
         return ""
@@ -157,8 +176,17 @@ class Vmess(Inbound):
 class Vless(Inbound):
     decryption = models.CharField(max_length=100, blank=True, null=True)
 
-    def get_client_link(self, user: User) -> str:
-        return ""
+    def get_client_link(self, domain: str, port: int, user: User) -> str:
+        transport_props = self.transport.get_link_props() if self.transport else {}
+        props = {
+            'security': 'tls' if transport_props.get('tls', False) else '',
+            'type': transport_props.get('network'),
+            'serviceName': transport_props.get('serviceName', ''),
+            'path': transport_props.get('path', ''),
+            'sni': self.sni,
+        }
+        query = '&'.join("%s=%s" % (k, v) for k, v in props.items() if v)
+        return 'vless://%s@%s:%d?%s#%s' % (user.uuid, domain, port or self.port, query, self.name or self.tag)
 
     def get_client_json(self, user: User) -> str:
         return ""
@@ -175,6 +203,21 @@ class Vless(Inbound):
 
 
 class Trojan(Inbound):
+    def get_client_link(self, domain: str, port: int, user: User) -> str:
+        transport_props = self.transport.get_link_props() if self.transport else {}
+        props = {
+            'security': 'tls' if transport_props.get('tls', False) else '',
+            'type': transport_props.get('network'),
+            'serviceName': transport_props.get('serviceName', ''),
+            'path': transport_props.get('path', ''),
+            'sni': self.sni,
+        }
+        query = '&'.join("%s=%s" % (k, v) for k, v in props.items() if v)
+        return 'trojan://%s@%s:%d?%s#%s' % (user.uuid, domain, port or self.port, query, self.name or self.tag)
+    
+    def get_client_json(self, user: User) -> str:
+        return ""
+    
     def _get_settings_config(self, users: Iterable[User]):
         clients = list()
         for user in users:
@@ -247,6 +290,8 @@ class Transport(PolymorphicModel):
     
     @property
     def alpn(self):
+        if not self.tls_alpn:
+            return []
         return [a.strip() for a in self.tls_alpn.split(',')]
     
     def get_link_props(self):
@@ -342,7 +387,7 @@ class Grpc(Transport):
     def get_link_props(self):
         return {
             **super().get_link_props(),
-            'path': self.service_name,
+            'serviceName': self.service_name,
         }
 
 

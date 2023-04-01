@@ -2,31 +2,48 @@ from django.utils import timezone
 from v2client.v5.api import V2ray
 from proxy.models import *
 from django.conf import settings
-from django.db.models import F, Q, Value, Prefetch
+from django.db.models import F, Value, Prefetch
 from utils.schedule import Scheduler
 
 v2api: V2ray = None
 
 
 def generate_inbounds_config():
-    enabled_query = (Q(enabled=True) & 
-                     (Q(max__isnull=True) | Q(max__gt=F('up') + F('down'))) & 
-                     (Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now())))
+    enabled_filter = TrafficStats.ENABLED_FILTER
     return [*settings.INBOUNDS_CONF] + [
         inbound.get_server_config() for inbound in Inbound.objects.filter(
-            enabled_query
+            enabled_filter
         ).prefetch_related( # select_related won't work here, because of polymorphic models
             Prefetch('transport', queryset=Transport.objects.all().order_by('id'))
         ).prefetch_related(
             Prefetch('transport__tls_certificates', queryset=Certificate.objects.all().order_by('id'))
         ).prefetch_related(
-            Prefetch('group', queryset=Group.objects.filter(enabled_query).order_by('id'))
+            Prefetch('group', queryset=Group.objects.filter(enabled_filter).order_by('id'))
         ).prefetch_related(
-            Prefetch('group__memberships', queryset=Membership.objects.filter(enabled_query).order_by('id'))
+            Prefetch('group__memberships', queryset=Membership.objects.filter(enabled_filter).order_by('id'))
         ).prefetch_related(
-            Prefetch('group__memberships__user', queryset=User.objects.filter(enabled_query).order_by('id'))
+            Prefetch('group__memberships__user', queryset=User.objects.filter(enabled_filter).order_by('id'))
         ).order_by('id')
     ]
+    
+    
+def generate_user_links(username):
+    enabled_filter = TrafficStats.ENABLED_FILTER
+    return User.objects.filter(
+        Q(username=username) & enabled_filter
+    ).prefetch_related(
+        Prefetch('memberships', queryset=Membership.objects.filter(enabled_filter).order_by('id'))
+    ).prefetch_related(
+        Prefetch('memberships__group', queryset=Group.objects.filter(enabled_filter).order_by('id'))
+    ).prefetch_related(
+        Prefetch('memberships__group__public_addresses', queryset=Address.objects.all().order_by('id'))
+    ).prefetch_related(
+        Prefetch('memberships__group__inbounds', queryset=Inbound.objects.filter(enabled_filter).order_by('id'))
+    ).prefetch_related(
+        Prefetch('memberships__group__inbounds__transport', queryset=Transport.objects.all().order_by('id'))
+    ).prefetch_related(
+        Prefetch('memberships__group__inbounds__transport__tls_certificates', queryset=Certificate.objects.all().order_by('id'))
+    ).first().get_server_links()
 
 
 def generate_config():
