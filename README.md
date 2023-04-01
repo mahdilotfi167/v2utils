@@ -23,7 +23,6 @@ A multi-user, graphical and distributed management application for V2ray with ma
 - [ ] Quick setup with docker (Nginx, V2utils, DNS cache service, Distributed database, ...)
 - [ ] Add logs and errors to admin panel (read by grpc and LogsService)
 - [X] Partitioned django admin options
-- [ ] Two types of fallbacks (A fallbask can point to an inbound and a UDS will be created for share same address)
 - [ ] Sniffing options (Enable sniffing for users to view traffic and used websites)
 - [ ] Telegram bot can join channels and groups and automatically create user for all members
 - [X] User groups (each inbound will be created in a group and a user can have many groups) for handling user restrictions
