@@ -28,6 +28,8 @@ INBOUND_FIELDSETS = (
     'sniffing_enabled',
     'sniffing_dest_override',
     'group',
+    'name',
+    'sni',
 )
 
 

@@ -3,6 +3,8 @@ from polymorphic.models import PolymorphicModel
 from typing import Iterable
 from django.conf import settings
 from uuid import uuid4
+from base64 import b64encode
+from json import dumps
 
 
 class TrafficStats(models.Model):
@@ -20,6 +22,7 @@ class TrafficStats(models.Model):
 
 class Group(TrafficStats):
     title = models.CharField(max_length=100, unique=True)
+    users = models.ManyToManyField('User', through='Membership')
 
     def __str__(self):
         return self.title
@@ -61,6 +64,8 @@ class Inbound(PolymorphicModel, TrafficStats):
         max_length=255, blank=True, null=True)
     group = models.ForeignKey(
         Group, on_delete=models.CASCADE, related_name='inbounds', blank=True, null=True)
+    name = models.CharField(max_length=100, default="", blank=True)
+    sni = models.CharField(max_length=255, default="", blank=True)
 
     @property
     def protocol(self):
@@ -125,8 +130,25 @@ class Address(models.Model):
 
 
 class Vmess(Inbound):
-    def get_client_link(self, user: User) -> str:
-        return ""
+    def get_client_link(self, domain: str, user: User) -> str:
+        transport_props = self.transport.get_link_props() if self.transport else {}
+        props = {
+            "add": domain,
+            "aid": "0",
+            "host": "",
+            "id": user.uuid,
+            "net": self.transport.network if self.transport else '',
+            "path": transport_props.get('path', ''),
+            "port": self.port,
+            "ps": self.name or self.tag,
+            "scy": "none",
+            "sni": self.sni,
+            "alpn": ','.join(transport_props.get('alpn', [])),
+            "tls": "tls" if transport_props.get('tls', False) else "",
+            "type": transport_props.get('type', ''),
+            "v": "2",
+        }
+        return "vmess://%s" % b64encode(dumps(props)).decode('utf-8')
 
     def get_client_json(self, user: User) -> str:
         return ""
@@ -150,7 +172,7 @@ class Vless(Inbound):
             res['fallbacks'] = [fb.get_server_config()
                                 for fb in self.fallbacks.all()]
         return res
-    
+
 
 class Trojan(Inbound):
     def _get_settings_config(self, users: Iterable[User]):
@@ -215,14 +237,24 @@ class Transport(PolymorphicModel):
             stream_settings['security'] = 'tls'
             certificates = [c.get_server_config()
                             for c in self.tls_certificates.all()]
-            alpn = [a.strip() for a in self.tls_alpn.split(',')]
             stream_settings['tlsSettings'] = {
                 'certificates': certificates,
-                'alpn': alpn,
+                'alpn': self.alpn,
             }
         else:
             stream_settings['security'] = 'none'
         return stream_settings
+    
+    @property
+    def alpn(self):
+        return [a.strip() for a in self.tls_alpn.split(',')]
+    
+    def get_link_props(self):
+        return {
+            "network": self.network,
+            "tls": self.tls,
+            "alpn": self.alpn,
+        }
 
 
 class WebSocket(Transport):
@@ -238,6 +270,12 @@ class WebSocket(Transport):
                 'path': self.path,
             },
         }
+        
+    def get_link_props(self):
+        return {
+            **super().get_link_props(),
+            'path': self.path,
+        }
 
 
 class Http(Transport):
@@ -250,6 +288,12 @@ class Http(Transport):
             'httpSettings': {
                 'path': self.path,
             },
+        }
+        
+    def get_link_props(self):
+        return {
+            **super().get_link_props(),
+            'path': self.path,
         }
 
 
@@ -274,6 +318,13 @@ class Tcp(Transport):
             **super().get_server_config(),
             'tcpSettings': tcp_settings,
         }
+    
+    def get_link_props(self):
+        return {
+            **super().get_link_props(),
+            'path': self.header_request_path,
+            'type': self.header_type,
+        }
 
 
 class Grpc(Transport):
@@ -286,6 +337,12 @@ class Grpc(Transport):
             'grpcSettings': {
                 'serviceName': self.service_name,
             },
+        }
+
+    def get_link_props(self):
+        return {
+            **super().get_link_props(),
+            'path': self.service_name,
         }
 
 
